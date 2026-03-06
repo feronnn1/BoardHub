@@ -5,11 +5,11 @@ include 'db.php';
 // 1. SECURITY
 if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'Tenant') { header("Location: login.php"); exit(); }
 
-$user_id = $_SESSION['user_id'];
 $username = $_SESSION['user'];
 
-// Fetch Tenant Profile
-$user = $conn->query("SELECT * FROM users WHERE id=$user_id")->fetch_assoc();
+// Fetch Tenant Profile AND exact User ID
+$user = $conn->query("SELECT * FROM users WHERE username='$username'")->fetch_assoc();
+$user_id = $user['id']; // Now we safely have the ID for the rest of the page!
 $pp = !empty($user['profile_pic']) ? "assets/uploads/" . $user['profile_pic'] : "assets/default.jpg";
 
 // 2. FETCH ACTIVE RENTAL (Added shared_price to the query)
@@ -194,8 +194,47 @@ if ($has_rental) {
     </div>
 
     <?php if ($pending_apps->num_rows > 0): ?>
-    <div class="alert alert-warning border-0 rounded-4 mb-4">
-        <i class="bi bi-hourglass-split me-2"></i> You have pending room applications.
+    <h5 class="fw-bold text-warning mb-3"><i class="bi bi-hourglass-split"></i> Pending Requests</h5>
+    <div class="row mb-4">
+        <?php while($app = $pending_apps->fetch_assoc()): ?>
+        <div class="col-md-6">
+            <div class="stat-card border-warning border-opacity-25" style="border-color: rgba(255, 193, 7, 0.3) !important;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="fw-bold m-0"><?php echo htmlspecialchars($app['title']); ?></h5>
+                        <div class="text-secondary small mb-2">Room: <?php echo htmlspecialchars($app['room_name']); ?></div>
+                        <span class="badge bg-warning text-dark">Waiting for Approval</span>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#cancelModal<?php echo $app['app_id']; ?>">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="cancelModal<?php echo $app['app_id']; ?>" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold text-white"><i class="bi bi-x-circle-fill text-danger me-2"></i>Cancel Request</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-secondary">
+                        Are you sure you want to cancel your application for <strong class="text-white"><?php echo htmlspecialchars($app['room_name']); ?></strong> at <strong class="text-white"><?php echo htmlspecialchars($app['title']); ?></strong>?
+                        <br><br>
+                        This action cannot be undone.
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Request</button>
+                        <a href="cancel_application.php?id=<?php echo $app['app_id']; ?>" class="btn btn-danger px-4 fw-bold">Yes, Cancel</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <?php endwhile; ?>
     </div>
     <?php endif; ?>
 

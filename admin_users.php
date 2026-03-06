@@ -11,7 +11,7 @@ if (isset($_POST['update_user'])) {
     $fname = $_POST['first_name'];
     $lname = $_POST['last_name'];
     $email = $_POST['email'];
-    $fb_name = $_POST['facebook_name']; // NEW FIELD
+    $fb_name = $_POST['facebook_name']; 
     $phone = $_POST['phone'];
     $role = $_POST['role'];
 
@@ -58,20 +58,25 @@ $users = $conn->query($sql);
         
         .main-content { margin-left: 260px; padding: 40px 50px; }
 
-        /* NEW BOX LAYOUT UI */
-        .user-box-card { background: var(--bg-card); border: 1px solid #333; border-radius: 16px; padding: 25px; transition: 0.2s; height: 100%; display: flex; flex-direction: column; }
-        .user-box-card:hover { border-color: #555; transform: translateY(-3px); }
-        .user-img { width: 55px; height: 55px; border-radius: 50%; object-fit: cover; margin-right: 15px; border: 2px solid #333; }
+        /* TABLE UI */
+        .table-card { background: var(--bg-card); border: 1px solid #333; border-radius: 16px; overflow: hidden; }
+        .custom-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .custom-table th { background: #222; padding: 15px 20px; text-align: left; color: #888; font-size: 12px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; border-bottom: 1px solid #333; }
+        .custom-table td { padding: 18px 20px; border-bottom: 1px solid #2a2a2a; color: #eee; font-size: 14px; vertical-align: middle; background: var(--bg-card); transition: background 0.2s; }
+        .custom-table tr:last-child td { border-bottom: none; }
+        .custom-table tr:hover td { background: #222; }
+
+        .user-img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin-right: 15px; border: 2px solid #333; }
         
         /* Buttons */
-        .btn-action { width: 34px; height: 34px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; border: none; transition: 0.2s; margin-left: 5px; }
+        .btn-action { width: 32px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; border: none; transition: 0.2s; margin-left: 5px; }
         .btn-edit { background: rgba(13, 202, 240, 0.15); color: #0dcaf0; }
         .btn-edit:hover { background: #0dcaf0; color: white; }
         .btn-delete { background: rgba(220, 53, 69, 0.15); color: #dc3545; }
         .btn-delete:hover { background: #dc3545; color: white; }
 
         /* Badges */
-        .role-badge { padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+        .role-badge { padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
         .badge-Landlord { background: rgba(255, 144, 0, 0.15); color: var(--accent-orange); border: 1px solid rgba(255, 144, 0, 0.3); }
         .badge-Tenant { background: rgba(13, 202, 240, 0.15); color: #0dcaf0; border: 1px solid rgba(13, 202, 240, 0.3); }
         .badge-Admin { background: rgba(220, 53, 69, 0.15); color: #dc3545; border: 1px solid rgba(220, 53, 69, 0.3); }
@@ -94,7 +99,7 @@ $users = $conn->query($sql);
     </a>
     
     <div class="nav-label">Main</div>
-    <a href="dashboard_admin.php" class="nav-link"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a href="dashboard_admin.php" class="nav-link"><i class="bi bi-speedometer2"></i> Overview</a>
     
     <div class="nav-label mt-4">Management</div>
     <a href="admin_users.php?role=Landlord" class="nav-link <?php echo ($role_filter == 'Landlord') ? 'active' : ''; ?>"><i class="bi bi-person-tie"></i> Landlords</a>
@@ -107,46 +112,57 @@ $users = $conn->query($sql);
         <h2 class="fw-bold m-0">Manage <?php echo $role_filter; ?>s</h2>
     </div>
 
+    <?php if(isset($_GET['msg'])): ?>
+        <div class="alert alert-success border-0 rounded-3 mb-4"><?php echo htmlspecialchars($_GET['msg']); ?></div>
+    <?php endif; ?>
     <?php if(isset($msg)): ?>
         <div class="alert alert-<?php echo $msg_type; ?> border-0 rounded-3 mb-4"><?php echo $msg; ?></div>
     <?php endif; ?>
     
-    <div class="row g-4">
-        <?php if ($users->num_rows > 0): ?>
-            <?php while($u = $users->fetch_assoc()): 
-                $pic = !empty($u['profile_pic']) ? "assets/uploads/".$u['profile_pic'] : "assets/default.jpg";
-                $email = isset($u['email']) ? htmlspecialchars($u['email']) : '';
-                $fb = isset($u['facebook_name']) ? htmlspecialchars($u['facebook_name']) : ''; 
-                $phone = isset($u['phone']) ? htmlspecialchars($u['phone']) : '';
-                $fname = htmlspecialchars($u['first_name']);
-                $lname = htmlspecialchars($u['last_name']);
-            ?>
-            <div class="col-xxl-4 col-lg-6 col-md-6">
-                <div class="user-box-card">
-                    <div class="d-flex align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-25">
-                        <img src="<?php echo $pic; ?>" class="user-img">
-                        <div class="me-auto">
-                            <div class="fw-bold text-white fs-6"><?php echo $fname . ' ' . $lname; ?></div>
-                            <div class="small text-secondary" style="font-size: 12px;">@<?php echo htmlspecialchars($u['username']); ?></div>
-                        </div>
-                        <span class="role-badge badge-<?php echo $u['role']; ?>"><?php echo $u['role']; ?></span>
-                    </div>
-
-                    <div class="mb-4 d-flex flex-column gap-2 flex-grow-1">
-                        <?php if($email): ?><span class="small text-white"><i class="bi bi-envelope me-2 text-secondary"></i><?php echo $email; ?></span><?php endif; ?>
-                        <?php if($fb): ?><span class="small text-secondary"><i class="bi bi-facebook me-2 text-primary"></i><?php echo $fb; ?></span><?php endif; ?>
-                        <?php if($phone): ?><span class="small text-secondary"><i class="bi bi-telephone me-2 text-success"></i><?php echo $phone; ?></span><?php endif; ?>
-                    </div>
-
-                    <div class="d-flex justify-content-between align-items-end pt-3 border-top border-secondary border-opacity-25 mt-auto">
-                        <div class="small text-secondary" style="font-size: 11px;">
-                            <span class="d-block text-uppercase fw-bold mb-1" style="font-size: 9px; letter-spacing: 0.5px;">Joined</span>
-                            <?php echo date("M d, Y", strtotime($u['created_at'])); ?>
-                        </div>
-                        <div class="d-flex">
+    <div class="table-card">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>User Profile</th>
+                    <th>Role</th>
+                    <th>Contact Info</th>
+                    <th>Date Joined</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if ($users->num_rows > 0): ?>
+                    <?php while($u = $users->fetch_assoc()):
+                        $pic = !empty($u['profile_pic']) ? "assets/uploads/".$u['profile_pic'] : "assets/default.jpg";
+                        $email = isset($u['email']) ? htmlspecialchars($u['email']) : '';
+                        $fb = isset($u['facebook_name']) ? htmlspecialchars($u['facebook_name']) : ''; 
+                        $phone = isset($u['phone']) ? htmlspecialchars($u['phone']) : '';
+                        $fname = htmlspecialchars($u['first_name']);
+                        $lname = htmlspecialchars($u['last_name']);
+                    ?>
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="<?php echo $pic; ?>" class="user-img">
+                                <div>
+                                    <div class="fw-bold text-white"><?php echo $fname . ' ' . $lname; ?></div>
+                                    <div class="small text-secondary" style="font-size: 11px;">@<?php echo htmlspecialchars($u['username']); ?></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="role-badge badge-<?php echo $u['role']; ?>"><?php echo $u['role']; ?></span></td>
+                        <td>
+                            <div class="d-flex flex-column gap-1">
+                                <?php if($email): ?><span class="small text-white"><i class="bi bi-envelope me-2 text-secondary"></i><?php echo $email; ?></span><?php endif; ?>
+                                <?php if($fb): ?><span class="small text-secondary"><i class="bi bi-facebook me-2 text-primary"></i><?php echo $fb; ?></span><?php endif; ?>
+                                <?php if($phone): ?><span class="small text-secondary"><i class="bi bi-telephone me-2 text-success"></i><?php echo $phone; ?></span><?php endif; ?>
+                            </div>
+                        </td>
+                        <td class="text-secondary"><?php echo date("M d, Y", strtotime($u['created_at'])); ?></td>
+                        <td class="text-end">
                             <?php if($u['role'] != 'Admin'): ?>
-                                <button class="btn-action btn-edit" 
-                                        data-bs-toggle="modal" 
+                                <button class="btn-action btn-edit"
+                                        data-bs-toggle="modal"
                                         data-bs-target="#editUserModal"
                                         data-id="<?php echo $u['id']; ?>"
                                         data-fname="<?php echo $fname; ?>"
@@ -155,25 +171,46 @@ $users = $conn->query($sql);
                                         data-fb="<?php echo $fb; ?>"
                                         data-phone="<?php echo $phone; ?>"
                                         data-role="<?php echo $u['role']; ?>">
-                                    <i class="bi bi-pencil-fill" style="font-size: 13px;"></i>
+                                    <i class="bi bi-pencil-fill" style="font-size: 12px;"></i>
                                 </button>
-                                <a href="admin_delete.php?type=user&id=<?php echo $u['id']; ?>" class="btn-action btn-delete" onclick="return confirm('Delete this user? All their data will be lost.');">
-                                    <i class="bi bi-trash-fill" style="font-size: 13px;"></i>
-                                </a>
+
+                                <button type="button" class="btn-action btn-delete" data-bs-toggle="modal" data-bs-target="#deleteUserModal<?php echo $u['id']; ?>">
+                                    <i class="bi bi-trash-fill" style="font-size: 12px;"></i>
+                                </button>
                             <?php else: ?>
                                 <span class="badge bg-secondary">Locked</span>
                             <?php endif; ?>
+                        </td>
+                    </tr>
+
+                    <div class="modal fade" id="deleteUserModal<?php echo $u['id']; ?>" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title fw-bold text-white"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Delete User</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body text-secondary">
+                                    Are you sure you want to permanently delete the account of <strong class="text-white"><?php echo $fname . ' ' . $lname; ?></strong>?
+                                    <br><br>
+                                    All their associated data, properties, and records will be lost. This action cannot be undone.
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <a href="admin_delete.php?type=user&id=<?php echo $u['id']; ?>" class="btn btn-danger px-4 fw-bold">Yes, Delete User</a>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-            <?php endwhile; ?>
-        <?php else: ?>
-            <div class="col-12 text-center py-5 text-secondary">
-                <i class="bi bi-person-x fs-1 mb-3 d-block"></i>
-                No users found in this category.
-            </div>
-        <?php endif; ?>
+
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-secondary">No users found in this category.</td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
     </div>
 </div>
 
