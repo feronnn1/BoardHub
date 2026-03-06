@@ -2,26 +2,52 @@
 session_start();
 include 'db.php';
 
-if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'Admin') { header("Location: login.php"); exit(); }
+// 1. SECURITY CHECK (Only Super Admin is allowed)
+if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'Admin') { 
+    header("Location: login.php"); 
+    exit(); 
+}
 
-if(isset($_GET['type']) && isset($_GET['id'])) {
-    $id = intval($_GET['id']);
+// 2. CHECK WHAT WE ARE DELETING
+if (isset($_GET['type']) && isset($_GET['id'])) {
     $type = $_GET['type'];
-    
-    if($type == 'user') {
-        // Delete user (Cascading DB rules usually handle the rest, but let's be safe)
-        $conn->query("DELETE FROM users WHERE id=$id");
-        header("Location: admin_users.php?msg=User deleted");
-    } 
-    elseif($type == 'property') {
-        // Delete property
-        $conn->query("DELETE FROM properties WHERE id=$id");
-        header("Location: admin_properties.php?msg=Property deleted");
-    }
-    elseif($type == 'room') {
-        // Delete room (Redirects back to admin_rooms.php needs prop_id usually, simplifies to back)
-        $conn->query("DELETE FROM room_units WHERE id=$id");
-        header("Location: admin_properties.php?msg=Room deleted"); 
+    $id = intval($_GET['id']);
+
+    if ($type === 'user') {
+        // --- DELETE USER ---
+        $stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
+        $stmt->bind_param("i", $id);
+        
+        if ($stmt->execute()) {
+            $stmt->close();
+            // Redirect back to the users list
+            header("Location: admin_users.php?role=All&msg=User deleted successfully");
+            exit();
+        }
+
+    } elseif ($type === 'property') {
+        // --- DELETE PROPERTY ---
+        
+        // Safety Step: Delete all rooms connected to this property first
+        $del_rooms = $conn->prepare("DELETE FROM room_units WHERE property_id = ?");
+        $del_rooms->bind_param("i", $id);
+        $del_rooms->execute();
+        $del_rooms->close();
+
+        // Now delete the main property
+        $stmt = $conn->prepare("DELETE FROM properties WHERE id = ?");
+        $stmt->bind_param("i", $id);
+        
+        if ($stmt->execute()) {
+            $stmt->close();
+            // Redirect back to the properties list
+            header("Location: admin_properties.php?msg=Property and all connected rooms deleted successfully");
+            exit();
+        }
     }
 }
+
+// Fallback redirect if something goes wrong or someone tries to access this page directly
+header("Location: dashboard_admin.php");
+exit();
 ?>
